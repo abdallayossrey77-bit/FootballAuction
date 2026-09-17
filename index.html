@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>مزاد كرة القدم</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#10151d;color:#fff}
+button{border:0;border-radius:14px;padding:14px 18px;font-size:16px;font-weight:bold;cursor:pointer}
+.app{max-width:520px;margin:auto;min-height:100vh;background:#151c26}
+header{padding:18px;background:#1d2633;position:sticky;top:0;z-index:5}
+.logo{font-size:25px;font-weight:900}
+.sub{color:#9eabbc;font-size:13px;margin-top:5px}
+.balances{display:flex;gap:10px;margin-top:15px}
+.balance{flex:1;background:#273242;padding:12px;border-radius:12px;text-align:center}
+.balance b{display:block;font-size:18px;margin-top:5px}
+main{padding:15px 15px 90px}
+.card{background:#202a38;border-radius:18px;padding:18px;margin-bottom:14px}
+h2{margin:0 0 14px}
+h3{margin:0 0 8px}
+.muted{color:#aab4c2}
+.big{font-size:27px;font-weight:900}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.action{background:#2a3545;color:white;width:100%}
+.primary{background:#18a96b;color:white;width:100%}
+.gold{background:#d69d22;color:#111;width:100%}
+.red{background:#bd3d4b;color:white;width:100%}
+.player{display:flex;align-items:center;justify-content:space-between;background:#293546;border-radius:14px;padding:12px;margin:8px 0}
+.player small{color:#aeb8c5}
+.nav{position:fixed;bottom:0;left:0;right:0;max-width:520px;margin:auto;background:#1c2531;display:grid;grid-template-columns:repeat(5,1fr);padding:8px 4px;z-index:10}
+.nav button{background:none;color:#aeb8c5;padding:8px 3px;font-size:12px}
+.nav button.active{color:#fff}
+.hidden{display:none}
+.notice{padding:12px;border-radius:12px;background:#26364a;color:#dce6f2;margin-bottom:12px}
+.timer{text-align:center;font-size:35px;font-weight:900;padding:10px}
+.stat{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #354152}
+.tag{display:inline-block;background:#364457;border-radius:20px;padding:5px 10px;font-size:12px;margin:3px}
+.auction-box{text-align:center}
+.bid{font-size:30px;font-weight:900;margin:15px}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<header>
+  <div class="logo">⚽ مزاد كرة القدم</div>
+  <div class="sub">Football Auction — Beta</div>
+  <div class="balances">
+    <div class="balance">🪙 Coins<b id="coins">1000000</b></div>
+    <div class="balance">💎 Gems<b id="gems">10</b></div>
+    <div class="balance">⭐ التقييم<b id="rating">1000</b></div>
+  </div>
+</header>
+
+<main>
+
+<section id="home">
+  <div class="card">
+    <h2>أهلاً بك في مزاد كرة القدم 👋</h2>
+    <p class="muted">كوّن فريقك عن طريق المزادات، ثم نافس لاعبين قريبين منك في التقييم.</p>
+    <button class="primary" onclick="show('match')">⚔️ ابدأ مباراة</button>
+  </div>
+
+  <div class="grid">
+    <button class="action" onclick="show('auction')">🔨 المزاد</button>
+    <button class="action" onclick="show('team')">👥 فريقي</button>
+    <button class="action" onclick="show('tournaments')">🏆 البطولات</button>
+    <button class="action" onclick="show('account')">👤 حسابي</button>
+  </div>
+
+  <div class="card">
+    <h3>📅 نشاط اليوم</h3>
+    <div class="stat"><span>المباريات</span><b id="matches">0</b></div>
+    <div class="stat"><span>فوز</span><b id="wins">0</b></div>
+    <div class="stat"><span>خسارة</span><b id="losses">0</b></div>
+  </div>
+
+  <div class="notice">
+    💡 المباريات العادية: دخول 250,000 Coins.<br>
+    🏆 الفائز يحصل على 450,000 Coins بعد نظام الرسوم.
+  </div>
+</section>
+
+<section id="match" class="hidden">
+  <div class="card">
+    <h2>⚔️ مباراة</h2>
+    <div class="notice">سيتم البحث عن منافس قريب من تقييمك.</div>
+    <div class="stat"><span>تقييمك</span><b id="myRating">1000</b></div>
+    <div class="stat"><span>رسوم الدخول</span><b>250,000 🪙</b></div>
+    <br>
+    <button class="primary" onclick="findOpponent()">🔎 البحث عن منافس</button>
+  </div>
+
+  <div id="opponent" class="card hidden"></div>
+  <div id="matchResult" class="card hidden"></div>
+</section>
+
+<section id="auction" class="hidden">
+  <div class="card auction-box">
+    <h2>🔨 مزاد اللاعب</h2>
+    <div class="player">
+      <div>
+        <h3 id="auctionName">كريم فهد</h3>
+        <small id="auctionInfo">مهاجم • تقييم 86</small>
+      </div>
+      <span>⚽</span>
+    </div>
+
+    <div class="bid" id="bid">100,000 🪙</div>
+    <button class="gold" onclick="bid()">💰 زايد 25,000</button>
+    <br><br>
+    <button class="primary" onclick="buyPlayer()">✅ الفوز بالمزاد</button>
+  </div>
+
+  <div class="card">
+    <h3>طريقة الحصول على اللاعبين</h3>
+    <p class="muted">لا يوجد بيع أو تداول للاعبين. الحصول عليهم يتم عن طريق المزاد.</p>
+  </div>
+</section>
+
+<section id="team" class="hidden">
+  <div class="card">
+    <h2>👥 فريقي</h2>
+    <div id="teamList"></div>
+    <div class="stat"><span>قوة الفريق</span><b id="teamPower">0</b></div>
+  </div>
+</section>
+
+<section id="tournaments" class="hidden">
+  <div class="card">
+    <h2>🏆 البطولات الأسبوعية</h2>
+    <p class="muted">البطولات تقام أسبوعياً.</p>
+
+    <div class="card">
+      <h3>🏆 بطولة الـ128</h3>
+      <p class="muted">128 لاعب — خروج مغلوب</p>
+      <span class="tag">🎟️ تذكرة</span>
+      <span class="tag">💎 رسوم حسب النظام</span>
+      <button class="action" onclick="enterTournament('128')">دخول</button>
+    </div>
+
+    <div class="card">
+      <h3>🏆 بطولة الـ64</h3>
+      <p class="muted">64 لاعب — خروج مغلوب</p>
+      <button class="action" onclick="enterTournament('64')">دخول</button>
+    </div>
+
+    <div class="card">
+      <h3>🏆 بطولة الـ32</h3>
+      <p class="muted">32 لاعب — خروج مغلوب</p>
+      <button class="action" onclick="enterTournament('32')">دخول</button>
+    </div>
+
+    <div class="card">
+      <h3>👑 بطولة الغالب والمغلوب</h3>
+      <p class="muted">نظام خاص يعتمد على نتيجة المواجهات.</p>
+      <button class="gold" onclick="enterTournament('winner')">دخول</button>
+    </div>
+  </div>
+
+  <div class="notice">
+    الموسم الأساسي: 45 يوماً.<br>
+    يتم تحديث الترتيب والتقييم حسب نتائج المباريات.
+  </div>
+</section>
+
+<section id="account" class="hidden">
+  <div class="card">
+    <h2>👤 الحساب</h2>
+    <div class="stat"><span>الاسم</span><b>لاعب جديد</b></div>
+    <div class="stat"><span>التقييم</span><b id="accountRating">1000</b></div>
+    <div class="stat"><span>الموسم</span><b>الموسم 1</b></div>
+    <div class="stat"><span>Coins</span><b id="accountCoins">1000000</b></div>
+    <div class="stat"><span>Gems</span><b id="accountGems">10</b></div>
+  </div>
+
+  <div class="card">
+    <h3>💎 الجواهر</h3>
+    <p class="muted">يمكن الحصول على أو شراء الجواهر باستخدام Coins بحد أقصى 10 جواهر يومياً.</p>
+    <button class="gold" onclick="buyGem()">شراء جوهرة — 5,000 🪙</button>
+  </div>
+
+  <div class="card">
+    <h3>🎁 الإعلانات</h3>
+    <p class="muted">يمكن مشاهدة إعلانات للحصول على مكافآت وفق حدود النظام.</p>
+    <button class="action" onclick="rewardAd()">مشاهدة إعلان تجريبي</button>
+  </div>
+</section>
+
+</main>
+
+<nav class="nav">
+  <button onclick="show('home')" class="active">🏠<br>الرئيسية</button>
+  <button onclick="show('auction')">🔨<br>المزاد</button>
+  <button onclick="show('match')">⚔️<br>مباراة</button>
+  <button onclick="show('tournaments')">🏆<br>البطولات</button>
+  <button onclick="show('account')">👤<br>حسابي</button>
+</nav>
+
+</div>
+
+<script>
+const defaultData={
+ coins:1000000,
+ gems:10,
+ rating:1000,
+ matches:0,
+ wins:0,
+ losses:0,
+ team:[],
+ gemsBought:0
+};
+
+let data=JSON.parse(localStorage.getItem("footballAuction"))||defaultData;
+
+function save(){
+ localStorage.setItem("footballAuction",JSON.stringify(data));
+ update();
+}
+
+function fmt(n){
+ return Number(n).toLocaleString("en-US");
+}
+
+function update(){
+ document.getElementById("coins").textContent=fmt(data.coins);
+ document.getElementById("gems").textContent=fmt(data.gems);
+ document.getElementById("rating").textContent=data.rating;
+ document.getElementById("myRating").textContent=data.rating;
+ document.getElementById("accountRating").textContent=data.rating;
+ document.getElementById("accountCoins").textContent=fmt(data.coins);
+ document.getElementById("accountGems").textContent=data.gems;
+ document.getElementById("matches").textContent=data.matches;
+ document.getElementById("wins").textContent=data.wins;
+ document.getElementById("losses").textContent=data.losses;
+
+ let list=document.getElementById("teamList");
+ if(data.team.length===0){
+   list.innerHTML='<p class="muted">لم تحصل على لاعبين بعد. ادخل المزاد لإضافة أول لاعب.</p>';
+ }else{
+   list.innerHTML=data.team.map(p=>
+   `<div class="player">
+      <div><b>${p.name}</b><br><small>${p.pos} • تقييم ${p.rating}</small></div>
+      <span>⚽</span>
+   </div>`).join("");
+ }
+ let power=data.team.reduce((a,p)=>a+p.rating,0);
+ document.getElementById("teamPower").textContent=power;
+}
+
+function show(id){
+ document.querySelectorAll("main section").forEach(x=>x.classList.add("hidden"));
+ document.getElementById(id).classList.remove("hidden");
+
+ document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));
+ let map={home:0,auction:1,match:2,tournaments:3,account:4};
+ if(map[id]!==undefined) document.querySelectorAll(".nav button")[map[id]].classList.add("active");
+ window.scrollTo(0,0);
+}
+
+function findOpponent(){
+ if(data.coins<250000){
+   alert("لا يوجد Coins كافية لدخول المباراة.");
+   return;
+ }
+
+ data.coins-=250000;
+ save();
+
+ let difference=Math.floor(Math.random()*101)-50;
+ let opponentRating=Math.max(1,data.rating+difference);
+
+ let box=document.getElementById("opponent");
+ box.classList.remove("hidden");
+ box.innerHTML=`
+ <h2>🎯 تم العثور على منافس</h2>
+ <div class="player">
+   <div><b>لاعب منافس</b><br><small>تقييم ${opponentRating}</small></div>
+   <span>⚔️</span>
+ </div>
+ <button class="primary" onclick="playMatch(${opponentRating})">▶️ ابدأ المباراة</button>`;
+}
+
+function playMatch(opponentRating){
+ let myPower=data.rating+data.team.reduce((a,p)=>a+p.rating,0)/10;
+ let oppPower=opponentRating+Math.random()*100;
+
+ let win=myPower>=oppPower;
+ let result=document.getElementById("matchResult");
+ result.classList.remove("hidden");
+
+ data.matches++;
+
+ if(win){
+   data.wins++;
+   data.coins+=450000;
+   data.rating+=20;
+   result.innerHTML="<h2>🎉 فوز!</h2><p>حصلت على 450,000 Coins.</p>";
+ }else{
+   data.losses++;
+   data.rating=Math.max(1,data.rating-15);
+   result.innerHTML="<h2>😔 خسارة</h2><p>تم خصم رسوم المباراة بالفعل.</p>";
+ }
+
+ save();
+}
+
+let currentBid=100000;
+
+function bid(){
+ currentBid+=25000;
+ document.getElementById("bid").textContent=fmt(currentBid)+" 🪙";
+}
+
+function buyPlayer(){
+ if(data.coins<currentBid){
+   alert("Coins غير كافية.");
+   return;
+ }
+
+ data.coins-=currentBid;
+
+ let names=[
+  ["كريم فهد","مهاجم",86],
+  ["عمر سامي","وسط",84],
+  ["ياسين علي","مدافع",82],
+  ["آدم حسن","حارس",85]
+ ];
+
+ let p=names[Math.floor(Math.random()*names.length)];
+ data.team.push({name:p[0],pos:p[1],rating:p[2]});
+
+ currentBid=100000;
+ document.getElementById("bid").textContent="100,000 🪙";
+
+ save();
+ alert("تمت إضافة اللاعب إلى فريقك ✅");
+ show("team");
+}
+
+function enterTournament(type){
+ let fee=type==="128"?1:1;
+
+ if(data.gems<fee){
+   alert("تحتاج إلى جوهرة للدخول.");
+   return;
+ }
+
+ data.gems-=fee;
+ save();
+
+ alert("تم تسجيلك في بطولة الـ"+type+" تجريبياً 🏆");
+}
+
+function buyGem(){
+ if(data.gemsBought>=10){
+   alert("وصلت إلى الحد اليومي: 10 جواهر.");
+   return;
+ }
+
+ if(data.coins<5000){
+   alert("Coins غير كافية.");
+   return;
+ }
+
+ data.coins-=5000;
+ data.gems++;
+ data.gemsBought++;
+
+ save();
+ alert("تم شراء جوهرة 💎");
+}
+
+function rewardAd(){
+ data.coins+=85000;
+ save();
+ alert("مكافأة الإعلان التجريبي: +85,000 Coins 🪙");
+}
+
+update();
+</script>
+
+</body>
+</html>
+                                     </html>
